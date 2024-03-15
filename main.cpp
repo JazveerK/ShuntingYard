@@ -40,13 +40,14 @@ int main() {
     bool running = true;
     char command[10];
 
-    cout << "Welcome to Shunting Yard" << endl;
+    cout << endl << "Welcome to Shunting Yard" << endl;
     
     while (running) {
         //asking user to run program
         cout << endl << "Enter a command: " << endl;
         cout << "Calculate" << endl;
         cout << "Quit" << endl << endl;
+        
         
         cin.get(command, 10);
         cin.clear();
@@ -135,24 +136,30 @@ Node* dequeue(Node* &front) {
     //front = front->getNext();
     //temp->setNext(NULL);
 // }
-
+    
 }
 
-//The actual Shunting Yard
 bool isOperator(char c) {
-    return (c == '+' || c == '-' || c == '*' || c == '/');
+    return (c == '+' || c == '-' || c == '*' || c == '/' || c == '^');
 }
 
+//Precedence with carrots and parenthesis now
 int precedence(char c) {
     if (c == '+' || c == '-')
         return 1;
     else if (c == '*' || c == '/')
         return 2;
+    //ADDED CARROTS AND PARENTHESIS
+    else if (c == '^')
+        return 3;
+    else if (c == '(' || c == ')')
+        return 0;
     return 0;
 }
 
+
+// The Actual Shunting Yard Algorithim
 void shuntingYard(const char* input, char* postfixExpression) {
-    
     Node* operatorStack = nullptr;
     Node* outputQueueFront = nullptr;
     Node* outputQueueRear = nullptr;
@@ -160,39 +167,31 @@ void shuntingYard(const char* input, char* postfixExpression) {
 
     while (input[i] != '\0') {
         char token = input[i];
-        
         if (token == '(')
             push(operatorStack, new Node(token));
-        
         else if (isdigit(token))
             enqueue(outputQueueFront, outputQueueRear, new Node(token));
         
         else if (token == ')') {
-            while (operatorStack != nullptr && peek(operatorStack)->getData() != '(') {
+            while (operatorStack != nullptr && peek(operatorStack)->getData() != '(')
                 enqueue(outputQueueFront, outputQueueRear, pop(operatorStack));
-            }
             pop(operatorStack);
         } 
         
         else if (isOperator(token)) {
-            
-            
-            while (operatorStack != nullptr && precedence(peek(operatorStack)->getData()) >= precedence(token)) {
+            while (operatorStack != nullptr && precedence(peek(operatorStack)->getData()) >= precedence(token) && peek(operatorStack)->getData() != '(')
                 enqueue(outputQueueFront, outputQueueRear, pop(operatorStack));
-            }
             push(operatorStack, new Node(token));
         }
-        
         i++;
     }
 
-    while (operatorStack != nullptr) {
+    while (operatorStack != nullptr)
         enqueue(outputQueueFront, outputQueueRear, pop(operatorStack));
-    }
 
+    // queue into postfixExpression
     Node* current = outputQueueFront;
     int j = 0;
-    
     while (current != nullptr) {
         postfixExpression[j++] = current->getData();
         current = current->getNext();
@@ -205,50 +204,49 @@ Node* buildExpressionTree(const char* postfixExpression) {
     int i = 0;
 
     while (postfixExpression[i] != '\0') {
-           char token = postfixExpression[i];
-           Node* newNode = new Node(token);
-           if (!isOperator(token)) {
-               newNode->setLeft(nullptr);
-               newNode->setRight(nullptr);
-           } 
-           
-           else {
-               Node* right = pop(nodeStack);
-               Node* left = pop(nodeStack);
-               newNode->setLeft(left);
-               newNode->setRight(right);
-           }
-           push(nodeStack, newNode);
-           i++;
-       }
-    
-       return pop(nodeStack);
-   }
+        char token = postfixExpression[i];
+        Node* newNode = new Node(token);
+        if (!isOperator(token)) {
+            newNode->setLeft(nullptr);
+            newNode->setRight(nullptr);
+        } 
+        
+        else {
+            Node* right = pop(nodeStack);
+            Node* left = pop(nodeStack);
+            newNode->setLeft(left);
+            newNode->setRight(right);
+        }
+        push(nodeStack, newNode);
+        i++;
+    }
+    return pop(nodeStack);
+}
 
-   void printInfix(Node* root) {
-       if (root){
-           if (isOperator(root->getData()))
-               cout << "(";
-           printInfix(root->getLeft());
-           cout << root->getData();
-           printInfix(root->getRight());
-           if (isOperator(root->getData()))
-               cout << ")";
-       }
-   }
+void printInfix(Node* root) {
+    if (root) {
+        if (isOperator(root->getData()) && root->getData() != '(')
+            cout << "(";
+        printInfix(root->getLeft());
+        cout << root->getData();
+        printInfix(root->getRight());
+        if (isOperator(root->getData()) && root->getData() != ')')
+            cout << ")";
+    }
+}
 
-   void printPrefix(Node* root) {
-       if (root){
-           cout << root->getData();
-           printPrefix(root->getLeft());
-           printPrefix(root->getRight());
-       }
-   }
+void printPrefix(Node* root) {
+    if (root) {
+        cout << root->getData();
+        printPrefix(root->getLeft());
+        printPrefix(root->getRight());
+    }
+}
 
-   void printPostfix(Node* root) {
-       if (root) {
-           printPostfix(root->getLeft());
-           printPostfix(root->getRight());
-           cout << root->getData();
-       }
-   }
+void printPostfix(Node* root) {
+    if (root) {
+        printPostfix(root->getLeft());
+        printPostfix(root->getRight());
+        cout << root->getData();
+    }
+}
